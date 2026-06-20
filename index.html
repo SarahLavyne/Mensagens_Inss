@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Mensagens - INSS Centro</title>
+    <style>
+        :root {
+            --primary: #003399;
+            --secondary: #f4f6fa;
+            --text: #333;
+            --accent: #25D366;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--secondary);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 24px;
+            margin: 0 0 5px 0;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            color: #444;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #fafafa;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            background-color: #fff;
+        }
+
+        .btn-group {
+            margin-top: 5px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-quick {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .btn-quick:hover {
+            background: #cbd5e1;
+        }
+
+        .output-box {
+            background: #f8fafc;
+            border: 1px dashed var(--primary);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 25px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-send {
+            flex: 1;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .btn-send:hover {
+            background-color: #20ba56;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Gerenciador de Avisos - INSS Centro</h1>
+        <p>Preencha os campos para gerar e enviar a notificação via WhatsApp</p>
+    </div>
+
+    <div class="grid">
+        <div class="full-width">
+            <label for="nome">Nome do Segurado</label>
+            <input type="text" id="nome" placeholder="EX: FRANCISCO CARLOS BARROZO DE BRITO" oninput="atualizarMensagem()">
+        </div>
+
+        <div>
+            <label for="telefone">Telefone (com DDD, apenas números)</label>
+            <input type="text" id="telefone" placeholder="68999999999">
+        </div>
+
+        <div>
+            <label for="atendente">Nome do Atendente</label>
+            <input type="text" id="atendente" placeholder="Sua assinatura" oninput="atualizarMensagem()">
+        </div>
+
+        <div>
+            <label for="tipo">Tipo de Atendimento</label>
+            <select id="tipo" onchange="atualizarMensagem()">
+                <option value="Perícia Médica">Perícia Médica</option>
+                <option value="Avaliação Social">Avaliação Social</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="profissional">Profissional (Médico / Assistente)</label>
+            <select id="profissional" onchange="atualizarMensagem()">
+                <option value="O perito médico">O perito médico</option>
+                <option value="A assistente social">A assistente social</option>
+            </select>
+        </div>
+
+        <div>
+            <label id="label-antiga" for="dataAntiga">Data/Hora Original</label>
+            <input type="text" id="dataAntiga" placeholder="Ex: dia 24/06/2026 (QUARTA-FEIRA)" oninput="atualizarMensagem()">
+        </div>
+
+        <div>
+            <label id="label-nova" for="dataNova">Nova Data e Hora</label>
+            <input type="text" id="dataNova" placeholder="Ex: Sexta-Feira 19/06/2026 as 14h00" oninput="atualizarMensagem()">
+        </div>
+
+        <div class="full-width">
+            <label for="documentos">Documentos Necessários</label>
+            <div class="btn-group">
+                <button class="btn-quick" onclick="setDocs('pericia')">Padrão Perícia</button>
+                <button class="btn-quick" onclick="setDocs('social')">Padrão Assistente Social</button>
+            </div>
+            <textarea id="documentos" rows="3" style="margin-top: 8px;" oninput="atualizarMensagem()"></textarea>
+        </div>
+        
+        <div class="full-width">
+            <label for="endereco">Endereço da Agência</label>
+            <input type="text" id="endereco" value="Previdência Social em Rio Branco - Av. Getúlio Vargas, 647 - Centro, Rio Branco - AC, 69.903-346" oninput="atualizarMensagem()">
+        </div>
+    </div>
+
+    <div class="output-box" id="previewMsg">
+        Preencha os campos acima para visualizar a mensagem...
+    </div>
+
+    <div class="actions">
+        <button class="btn-send" onclick="enviarWhatsApp()">
+            Enviar via WhatsApp Web
+        </button>
+    </div>
+</div>
+
+<script>
+    const docsPericia = "documentos médicos, laudos, documento com foto e CPF. Caso tenha menos de 18 anos, deve comparecer com o responsável (mãe, pai ou guardião legal), também com documento com foto, CPF e a criança/adolescente.";
+    const docsSocial = "documentos pessoais com foto, CPF, carteira de trabalho, comprovante de residência e comprovante de renda de todos que moram na casa.";
+
+    // Inicializa com o padrão de perícia
+    document.getElementById('documentos').value = docsPericia;
+
+    function setDocs(tipo) {
+        if(tipo === 'pericia') {
+            document.getElementById('documentos').value = docsPericia;
+            document.getElementById('tipo').value = "Perícia Médica";
+            document.getElementById('profissional').value = "O perito médico";
+        } else {
+            document.getElementById('documentos').value = docsSocial;
+            document.getElementById('tipo').value = "Avaliação Social";
+            document.getElementById('profissional').value = "A assistente social";
+        }
+        atualizarMensagem();
+    }
+
+    function gerarTexto() {
+        const nome = document.getElementById('nome').value.toUpperCase() || "[NOME DO SEGURADO]";
+        const atendente = document.getElementById('atendente').value || "[NOME]";
+        const tipo = document.getElementById('tipo').value;
+        const profissional = document.getElementById('profissional').value;
+        const dataAntiga = document.getElementById('dataAntiga').value || "[DATA ANTIGA]";
+        const dataNova = document.getElementById('dataNova').value || "[NOVA DATA]";
+        const endereco = document.getElementById('endereco').value;
+        const documentos = document.getElementById('documentos').value;
+
+        return `Olá, boa tarde, eu falo com ${nome}? Me chamo ${atendente}, aqui do INSS Agência Centro.\n\nGostaria de informar que a sua ${tipo} que seria realizada ${dataAntiga} foi alterada para ${dataNova}. ${profissional} solicitou o seu comparecimento na ${dataNova}.\n\nEndereço: ${endereco}\n\nObservação: Comparecer com ${documentos} Mostrar a mensagem para os atendentes na hora de pegar a senha.`;
+    }
+
+    function atualizarMensagem() {
+        document.getElementById('previewMsg').innerText = gerarTexto();
+    }
+
+    function enviarWhatsApp() {
+        let num = document.getElementById('telefone').value.replace(/\D/g, '');
+        if(!num) {
+            alert('Por favor, digite o número de telefone.');
+            return;
+        }
+        if(!num.startsWith('55')) {
+            num = '55' + num;
+        }
+        const texto = encodeURIComponent(gerarTexto());
+        window.open(`https://web.whatsapp.com/send?phone=${num}&text=${texto}`, '_blank');
+    }
+
+    // Executa uma vez para montar o esqueleto inicial
+    atualizarMensagem();
+</script>
+
+</body>
+</html>
