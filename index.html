@@ -10,6 +10,7 @@
             --secondary: #f4f6fa;
             --text: #333;
             --success: #2e7d32;
+            --wpp: #25D366;
         }
         
         body {
@@ -28,7 +29,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -74,11 +75,11 @@
 
         .grid-variaveis {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
             gap: 12px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .grid-variaveis { grid-template-columns: 1fr; }
         }
 
@@ -186,6 +187,11 @@
             margin-bottom: 10px;
         }
 
+        .acoes-resultado {
+            display: flex;
+            gap: 10px;
+        }
+
         .btn-copy {
             background: #0f172a;
             color: white;
@@ -193,10 +199,18 @@
             font-size: 13px;
         }
 
+        .btn-wpp {
+            background: var(--wpp);
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
         .btn-copy:hover { background: #334155; }
+        .btn-wpp:hover { background: #1ebd54; }
         
         .copied {
-            background: #25D366 !important;
+            background: #1e5222 !important;
             color: white;
         }
     </style>
@@ -206,15 +220,18 @@
 <div class="container">
     <div class="header">
         <h1>Painel de Notificações - INSS Centro</h1>
-        <p>Preencha os dados e copie os blocos de mensagens customizados para o WhatsApp móvel</p>
+        <p>Preencha os dados de forma individualizada e escolha como deseja enviar</p>
     </div>
 
+    <!-- LISTA DINÂMICA DE SEGURADOS -->
     <div id="containerSegurados">
-        </div>
+        <!-- Injetado via JS -->
+    </div>
 
     <button class="btn btn-add" onclick="adicionarSegurado()">+ Adicionar Próximo Segurado</button>
-    <button class="btn btn-generate" onclick="gerarPainelMensagens()">Gerar Blocos de Cópia</button>
+    <button class="btn btn-generate" onclick="gerarPainelMensagens()">Gerar Blocos de Cópia e Envio</button>
 
+    <!-- CONFIGURAÇÕES FIXAS -->
     <div class="config-box">
         <h3>Configurações Fixas (Raramente mudam)</h3>
         <div class="grid-fixos">
@@ -242,10 +259,11 @@
     </div>
 </div>
 
+<!-- SEÇÃO DE RESULTADOS -->
 <div class="container output-section" id="secaoResultados">
     <div class="header">
-        <h2>Mensagens Prontas para Cópia</h2>
-        <p>Clique em "Copiar Mensagem", abra a conversa do segurado no celular e cole.</p>
+        <h2>Mensagens Prontas para Uso</h2>
+        <p>Escolha entre copiar o texto ou abrir diretamente o link do WhatsApp.</p>
     </div>
     <div id="listaResultados"></div>
 </div>
@@ -261,21 +279,23 @@
     document.getElementById('documentos').value = docsPericia;
 
     function atualizarInterfacePadrao(situacao) {
-        const labelsAntiga = document.querySelectorAll('.lbl-antiga');
-        const labelsNova = document.querySelectorAll('.lbl-nova');
+        const labelsDataAntiga = document.querySelectorAll('.lbl-data-antiga');
+        const labelsHoraAntiga = document.querySelectorAll('.lbl-hora-antiga');
+        const labelsDataNova = document.querySelectorAll('.lbl-data-nova');
+        const labelsHoraNova = document.querySelectorAll('.lbl-hora-nova');
 
-        if(situacao === "Reagendamento Perícia") {
-            document.getElementById('documentos').value = docsPericia;
-            labelsAntiga.forEach(l => l.innerText = "Data/Hora Original");
-            labelsNova.forEach(l => l.innerText = "Nova Data/Hora");
-        } else if (situacao === "Reagendamento Social") {
-            document.getElementById('documentos').value = docsSocial;
-            labelsAntiga.forEach(l => l.innerText = "Data/Hora Original");
-            labelsNova.forEach(l => l.innerText = "Nova Data/Hora");
+        if(situacao === "Reagendamento Perícia" || situacao === "Reagendamento Social") {
+            document.getElementById('documentos').value = (situacao === "Reagendamento Perícia") ? docsPericia : docsSocial;
+            labelsDataAntiga.forEach(l => l.innerText = "Data Original");
+            labelsHoraAntiga.forEach(l => l.innerText = "Hora Original");
+            labelsDataNova.forEach(l => l.innerText = "Nova Data");
+            labelsHoraNova.forEach(l => l.innerText = "Nova Hora");
         } else if (situacao === "Antecipação Sábado") {
             document.getElementById('documentos').value = docsSabado;
-            labelsAntiga.forEach(l => l.innerText = "Horário Original Marcado");
-            labelsNova.forEach(l => l.innerText = "Data do Sábado (DD/MM/AAAA)");
+            labelsDataAntiga.forEach(l => l.innerText = "Dia Marcado");
+            labelsHoraAntiga.forEach(l => l.innerText = "Horário Original");
+            labelsDataNova.forEach(l => l.innerText = "Data do Sábado");
+            labelsHoraNova.forEach(l => l.innerText = "Horário de Chegada");
         }
     }
 
@@ -286,16 +306,12 @@
         div.id = `card_${contadorSegurados}`;
         
         const situacao = document.getElementById('tipoAtendimento').value;
-        let label1 = "Data/Hora Original";
-        let label2 = "Nova Data/Hora";
-        let placeholder1 = "Ex: dia 24/06/2026 (QUARTA-FEIRA)";
-        let placeholder2 = "Ex: Sexta-Feira 19/06/2026 as 14h00";
+        let lDataAntiga = "Data Original", lHoraAntiga = "Hora Original", lDataNova = "Nova Data", lHoraNova = "Nova Hora";
+        let pDataAntiga = "24/06/2026", pHoraAntiga = "14:00", pDataNova = "19/06/2026", pHoraNova = "14:00";
 
         if (situacao === "Antecipação Sábado") {
-            label1 = "Horário Original Marcado";
-            label2 = "Data do Sábado (DD/MM/AAAA)";
-            placeholder1 = "Ex: às 12:15";
-            placeholder2 = "Ex: 20/06/2026";
+            lDataAntiga = "Dia Marcado"; lHoraAntiga = "Horário Original"; lDataNova = "Data do Sábado"; lHoraNova = "Horário de Chegada";
+            pDataAntiga = "esse sábado"; pHoraAntiga = "12:15"; pDataNova = "20/06/2026"; pHoraNova = "a partir das 7:00";
         }
         
         div.innerHTML = `
@@ -305,16 +321,20 @@
                     <input type="text" class="nome" placeholder="Nome Completo">
                 </div>
                 <div>
-                    <label>Telefone / Celular</label>
-                    <input type="text" class="telefone" placeholder="(68) 99999-9999">
+                    <label>WhatsApp (com DDD)</label>
+                    <input type="text" class="telefone" placeholder="68999999999">
                 </div>
                 <div>
-                    <label class="lbl-antiga">${label1}</label>
-                    <input type="text" class="dataAntiga" placeholder="${placeholder1}">
+                    <label class="lbl-data-antiga">${lDataAntiga}</label>
+                    <input type="text" class="dataAntiga" placeholder="${pDataAntiga}">
                 </div>
                 <div>
-                    <label class="lbl-nova">${label2}</label>
-                    <input type="text" class="dataNova" placeholder="${placeholder2}">
+                    <label class="lbl-hora-antiga">${lHoraAntiga}</label>
+                    <input type="text" class="horaAntiga" placeholder="${pHoraAntiga}">
+                </div>
+                <div>
+                    <label class="lbl-data-nova">${lDataNova}</label>
+                    <input type="text" class="dataNova" placeholder="${pDataNova}">
                 </div>
             </div>
             <button class="btn btn-remove" onclick="removerSegurado(${contadorSegurados})">Remover este</button>
@@ -344,21 +364,24 @@
 
         cards.forEach((card, index) => {
             const nome = card.querySelector('.nome').value.toUpperCase() || "[NOME DO SEGURADO]";
-            const telefone = card.querySelector('.telefone').value || "[SEM TELEFONE]";
-            const dataAntiga = card.querySelector('.dataAntiga').value || "[DADO OMITIDO]";
-            const dataNova = card.querySelector('.dataNova').value || "[DADO OMITIDO]";
+            let telefone = card.querySelector('.telefone').value.replace(/\D/g, '') || "";
+            const dataAntiga = card.querySelector('.dataAntiga').value || "[DATA]";
+            const horaAntiga = card.querySelector('.horaAntiga').value || "[HORA]";
+            const dataNova = card.querySelector('.dataNova').value || "[NOVA DATA]";
             
             let textoMensagem = "";
 
             if (situacao === "Antecipação Sábado") {
-                // Modelo Novo: Mutirão/Antecipação do Sábado de Manhã
-                textoMensagem = `Olá, boa tarde, eu falo com ${nome}? Me chamo ${atendente}, aqui do INSS Agência Centro.\n\nPassando para lembrar que você tem uma pericia médica marcada para esse sábado ${dataAntiga}. Os peritos médicos solicitaram para que todos os agendados compareçam pela parte da manhã a partir das 7:00 horas da manhã dia ${dataNova} no sábado.\n\nEndereço: ${endereco}\n\nObservação: Comparecer com ${documentos}`;
+                textoMensagem = `Olá, boa tarde, eu falo com ${nome}? Me chamo ${atendente} , aqui do INSS Agência Centro.\n\nPassando para lembrar que você tem uma pericia médica marcada para ${dataAntiga} às ${horaAntiga}. Os peritos médicos solicitaram para que todos os agendados compareçam pela parte da manhã a partir das 7:00 horas da manhã dia ${dataNova} no sábado .\n\nEndereço: ${endereco}\n\nObservação: ${documentos}`;
             } else {
-                // Modelos Anteriores: Remanejamento de data comum
                 const tipoLabel = (situacao === "Reagendamento Perícia") ? "Perícia Médica" : "Avaliação Social";
                 const prof = (situacao === "Reagendamento Perícia") ? "O perito médico" : "A assistente social";
                 
-                textoMensagem = `Olá, boa tarde, eu falo com ${nome}? Me chamo ${atendente}, aqui do INSS Agência Centro.\n\nGostaria de informar que a sua ${tipoLabel} que seria realizada dia ${dataAntiga} foi alterada para ${dataNova}. ${prof} solicitou o seu comparecimento na ${dataNova}.\n\nEndereço: ${endereco}\n\nObservação: Comparecer com ${documentos}`;
+                textoMensagem = `Olá, boa tarde, eu falo com ${nome}? Me chamo ${atendente} , aqui do INSS Agência Centro.\n\nGostaria de informar que a sua ${tipoLabel} que seria realizada dia ${dataAntiga} às ${horaAntiga} foi alterada para ${dataNova}. ${prof} solicitou o seu comparecimento na ${dataNova}.\n\nEndereço: ${endereco}\n\nObservação: ${documentos}`;
+            }
+
+            if(telefone && !telefone.startsWith('55')) {
+                telefone = '55' + telefone;
             }
 
             const resultadoCard = document.createElement('div');
@@ -366,10 +389,13 @@
             
             resultadoCard.innerHTML = `
                 <div class="resultado-header">
-                    <span>Segurado #${index + 1}: ${nome} - ${telefone}</span>
+                    <span>Segurado #${index + 1}: ${nome}</span>
                 </div>
                 <div class="texto-final" id="texto_${index}">${textoMensagem}</div>
-                <button class="btn btn-copy" onclick="copiarTextoIndividual(${index}, this)">Copiar Mensagem</button>
+                <div class="acoes-resultado">
+                    <button class="btn btn-copy" onclick="copiarTextoIndividual(${index}, this)">Copiar Mensagem</button>
+                    <button class="btn btn-wpp" onclick="abrirWhatsApp('${telefone}', ${index})">Abrir no WhatsApp Web</button>
+                </div>
             `;
             
             listaResultados.appendChild(resultadoCard);
@@ -397,6 +423,15 @@
             botao.innerText = textoOriginal;
             botao.classList.remove('copied');
         }, 1500);
+    }
+
+    function abrirWhatsApp(telefone, index) {
+        if(!telefone) {
+            alert("Não foi possível abrir o WhatsApp porque o número de telefone está em branco ou inválido.");
+            return;
+        }
+        const texto = encodeURIComponent(document.getElementById(`texto_${index}`).innerText);
+        window.open(`https://web.whatsapp.com/send?phone=${telefone}&text=${texto}`, '_blank');
     }
 
     adicionarSegurado();
